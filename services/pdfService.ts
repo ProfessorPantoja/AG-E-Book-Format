@@ -1,6 +1,34 @@
+/**
+ * PDF SERVICE - Export Logic
+ * 
+ * This service handles the conversion of formatted HTML to PDF using html2pdf.js.
+ * 
+ * CRITICAL ARCHITECTURAL DECISION:
+ * We generate PDFs client-side (in the browser) to avoid:
+ * 1. Server costs (no need for a backend PDF generation service).
+ * 2. Privacy concerns (user data never leaves their machine).
+ * 3. Complexity of managing Docker containers or headless Chrome.
+ * 
+ * TRADE-OFFS:
+ * - Performance: Large documents (100+ pages) can be slow.
+ * - Browser dependency: Requires a modern browser with good Canvas support.
+ * - File size: PDFs are larger than server-generated ones (no compression optimization).
+ */
+
 import { BookMetadata, FontOption, Language } from '../types';
 import { t } from '../i18n';
 
+/**
+ * MAIN PDF GENERATION FUNCTION
+ * 
+ * FLOW:
+ * 1. Create a Title Page (if metadata exists).
+ * 2. Inject CSS into a temporary <div> (because html2pdf doesn't read external stylesheets).
+ * 3. Append the div to the DOM (html2pdf requires this).
+ * 4. Configure html2pdf options (margins, quality, page breaks).
+ * 5. Generate PDF and add headers/footers/page numbers.
+ * 6. Clean up the temporary DOM element.
+ */
 export const generatePdf = (
     htmlContent: string,
     metadata: BookMetadata,
@@ -9,6 +37,8 @@ export const generatePdf = (
 ) => {
     if (!htmlContent || !(window as any).html2pdf) return;
 
+    // FONT MAPPING (duplicated from DocumentPreview)
+    // TODO: Extract this to a shared utility file to avoid DRY violation.
     const getFontFamily = (font: FontOption) => {
         switch (font) {
             case 'Garamond': return "'EB Garamond', serif";
@@ -18,7 +48,9 @@ export const generatePdf = (
         }
     };
 
-    // Inject Title Page if metadata exists
+    // TITLE PAGE INJECTION
+    // We create a separate page with centered content.
+    // The `page-break-after: always` ensures it stays on its own page.
     let titlePageHtml = "";
     if (metadata.title || metadata.author) {
         titlePageHtml = `
@@ -36,13 +68,22 @@ export const generatePdf = (
 
     const fullContent = titlePageHtml + htmlContent;
 
+    // TEMPORARY DOM CONTAINER
+    // We create a detached div to hold the content.
+    // html2pdf will render this into a PDF and then we remove it.
     const element = document.createElement('div');
     element.innerHTML = fullContent;
     element.style.fontFamily = getFontFamily(selectedFont);
     element.style.padding = "0";
     element.style.maxWidth = "100%";
 
-    // Add custom classes for styles
+    // CSS INJECTION STRATEGY
+    // html2pdf.js does NOT read external stylesheets or index.html's <style> blocks.
+    // We MUST inject all CSS inline as a <style> tag inside the temporary div.
+    // 
+    // IMPORTANT: This CSS is duplicated from index.html.
+    // If you update styles in index.html, you MUST update them here too.
+    // TODO: Auto-inject CSS from index.html to eliminate duplication.
     const style = document.createElement('style');
     style.innerHTML = `
     h1, h2, h3 { color: #111; margin-top: 1.5em; }
@@ -73,18 +114,25 @@ export const generatePdf = (
     element.appendChild(style);
     document.body.appendChild(element);
 
+    // HTML2PDF CONFIGURATION
     const opt = {
-        margin: [25, 25, 25, 25],
+        margin: [25, 25, 25, 25], // Top, Right, Bottom, Left (in mm)
         filename: `${metadata.title || 'LuxeScript_Ebook'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        image: { type: 'jpeg', quality: 0.98 }, // High quality images
+        html2canvas: { scale: 2, useCORS: true }, // Retina quality, allow external images
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // Respect page-break-* CSS rules
     };
 
+    // PDF GENERATION + POST-PROCESSING
     (window as any).html2pdf().from(element).set(opt).toPdf().get('pdf').then((pdf: any) => {
         const totalPages = pdf.internal.getNumberOfPages();
+
+        // ADD HEADERS/FOOTERS/PAGE NUMBERS
+        // We loop through all pages and add metadata text using jsPDF's text() API.
         for (let i = 1; i <= totalPages; i++) {
+            // COVER PAGE NUMBERING LOGIC
+            // If 'numberCoverPage' is false, skip page 1.
             if (i === 1 && !metadata.numberCoverPage) continue;
 
             pdf.setPage(i);

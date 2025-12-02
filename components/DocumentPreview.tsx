@@ -10,6 +10,7 @@ interface DocumentPreviewProps {
     language: Language;
     isProcessing: boolean;
     processingMode: 'standard' | 'juridical' | null;
+    onUpdate?: (html: string) => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -18,26 +19,32 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     selectedFont,
     language,
     isProcessing,
-    processingMode
+    processingMode,
+    onUpdate
 }) => {
     const outputRef = useRef<HTMLDivElement>(null);
 
-    // Initialize Mermaid diagrams when HTML changes
+    // MERMAID DIAGRAM INITIALIZATION
+    // Mermaid.js is tricky in React because it scans the DOM.
+    // We use a useEffect hook that triggers whenever the 'html' content changes.
     useEffect(() => {
         if (html && (window as any).mermaid) {
-            // Need to wait for DOM to be ready
+            // TIMING ISSUE: We must wait for React to actually render the HTML string into the DOM
+            // before telling Mermaid to look for <div class="mermaid"> tags.
+            // A 200ms delay is usually sufficient.
             setTimeout(async () => {
                 try {
                     const mermaidElements = document.querySelectorAll('.mermaid');
                     if (mermaidElements.length > 0) {
-                        // Clear any previous renders
+                        // CLEANUP: Mermaid adds attributes like 'data-processed'.
+                        // We must strip these if re-rendering to force a fresh render.
                         mermaidElements.forEach(el => {
                             if (!el.getAttribute('data-processed')) {
                                 el.removeAttribute('data-processed');
                             }
                         });
 
-                        // Use mermaid.run() which is the modern API
+                        // EXECUTION: Use the modern mermaid.run() API.
                         await (window as any).mermaid.run({
                             nodes: mermaidElements,
                         });
@@ -49,12 +56,23 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         }
     }, [html]);
 
+    // FONT MAPPING
+    // We map user-friendly names to Google Fonts loaded in index.html.
     const getFontFamily = (font: FontOption) => {
         switch (font) {
             case 'Garamond': return "'EB Garamond', serif";
             case 'Bodoni': return "'Bodoni Moda', serif";
             case 'Trajan Pro': return "'Cinzel', serif";
             default: return "'Playfair Display', serif";
+        }
+    };
+
+    // EDITING LOGIC (ContentEditable)
+    // We use 'onBlur' to save changes. This is more performant than 'onInput'
+    // for large documents, as it only triggers when the user leaves the editor.
+    const handleBlur = () => {
+        if (outputRef.current && onUpdate) {
+            onUpdate(outputRef.current.innerHTML);
         }
     };
 
@@ -83,7 +101,10 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             {html && (
                 <div
                     ref={outputRef}
-                    className="preview-content mx-auto shadow-2xl shadow-slate-300/50 bg-white"
+                    className="preview-content mx-auto shadow-2xl shadow-slate-300/50 bg-white outline-none focus:ring-2 focus:ring-gold-500/20 transition-shadow"
+                    contentEditable={!!onUpdate}
+                    onBlur={handleBlur}
+                    suppressContentEditableWarning={true}
                     style={{
                         // Mimic A4 Paper dimensions and margins
                         width: '210mm',
@@ -96,7 +117,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 >
                     {/* Visual Title Page for Preview */}
                     {(metadata.title || metadata.author) && (
-                        <div className="mb-16 text-center border-b pb-8 border-slate-100 page-break-after">
+                        <div className="mb-16 text-center border-b pb-8 border-slate-100 page-break-after" contentEditable={false}>
                             <h1 className="text-5xl font-bold mb-4 text-slate-900">{metadata.title}</h1>
                             <p className="text-xl text-slate-600 mb-8">{metadata.author}</p>
                             <div className="text-sm text-slate-400">
@@ -110,7 +131,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
                     {/* Visual Footer for Preview */}
                     {(metadata.footerText || metadata.showPageNumbers) && (
-                        <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between text-xs text-slate-400">
+                        <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between text-xs text-slate-400" contentEditable={false}>
                             <span>{metadata.footerText}</span>
                             {metadata.showPageNumbers && <span>1 / 1 (Preview)</span>}
                         </div>

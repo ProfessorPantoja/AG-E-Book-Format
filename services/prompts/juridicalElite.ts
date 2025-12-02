@@ -1,9 +1,30 @@
-// Juridical Elite - Current "Juridical" Mode with Visual Enrichment
+/**
+ * JURIDICAL ELITE PROMPT
+ * 
+ * This prompt is designed for academic and legal documents.
+ * It's the most complex prompt because it needs to balance:
+ * 1. Formal, sober tone (no "creative" formatting)
+ * 2. Visual enrichment (timelines, stat cards, diagrams)
+ * 3. Content preservation (legal text cannot be changed)
+ * 
+ * COMMON PITFALLS THIS PROMPT PREVENTS:
+ * - AI wrapping the entire document in a blockquote (causes continuous orange line)
+ * - AI rewriting legal terms or case numbers
+ * - Mermaid diagrams with invalid syntax (breaks PDF generation)
+ * - Missing chapter end markers
+ */
+
 export const juridicalElitePrompt = (language: 'pt' | 'en', preserveContent: boolean) => {
+   // LANGUAGE INSTRUCTION
+   // Sets the target language for all AI-generated text (TOC titles, labels, etc.)
    const langInstruction = language === 'pt'
       ? "Output everything in Brazilian Portuguese."
       : "Output everything in English.";
 
+   // CONTENT PRESERVATION FLAG
+   // This is CRITICAL for legal documents where changing a single word can alter meaning.
+   // When preserveContent=true, we explicitly forbid the AI from editing the text.
+   // When false, we allow light editing for flow and grammar (useful for drafts).
    const contentRule = preserveContent
       ? `*** CRITICAL RULE: CONTENT PRESERVATION (LOCKED) ***
        - **DO NOT CHANGE THE TEXT CONTENT.** 
@@ -27,26 +48,34 @@ export const juridicalElitePrompt = (language: 'pt' | 'en', preserveContent: boo
 
     📖 STRUCTURAL REQUIREMENTS:
     1. Structure the content logically using <h1> for the main title, <h2> for chapters, <h3> for sections.
+    
     2. Enhance readability:
        - Use <strong> for key terminology or impactful phrases (respecting input bolding).
        - Use blockquote for important quotes or key takeaways.
        - Format data into clear HTML <table> structures or <ul>/<ol> lists.
+    
     3. Return ONLY the HTML body content (do not include <html>, <head>, or <body> tags).
+       WHY: We inject this into a pre-styled container in the browser. Adding duplicate <html> tags would break the DOM.
+    
     4. **IMPORTANT**: Automatically generate a "Table of Contents" (TOC) at the very beginning.
        - Wrap the TOC in a <div class="toc-container">.
        - Use <h2 class="toc-title">Table of Contents</h2>.
        - Create an unordered list <ul class="toc-list"> with internal links (<a href="#id">).
        - Ensure you add corresponding id attributes to <h2> and <h3> tags.
+       WHY: Legal documents are often 50+ pages. A TOC is essential for navigation.
     
     5. **Paragraph Formatting**:
        - First paragraph after heading: NO indentation
        - Subsequent paragraphs: Small indentation (class="indented")
        - Maximum 4-5 lines per paragraph for readability
        - **CRITICAL**: DO NOT wrap the entire text in a <blockquote> or <div> with a border. Only use blockquotes for actual quotes or short excerpts (max 1 paragraph).
+       WHY: The AI sometimes tries to wrap everything in a blockquote to make it "look formal".
+       This causes a continuous orange line down the left side of the document (CSS artifact).
 
     6. **Chapter Endings**:
        - At the very end of each chapter or major section, MUST insert:
          <div class="chapter-end-marker">***</div>
+       WHY: Provides visual closure and helps readers know when they've reached the end of a section.
 
     *** ELITE JURIDICAL & VISUAL ENRICHMENT MODE ACTIVE ***
     - The target audience is high-level legal professionals, judges, and scholars.

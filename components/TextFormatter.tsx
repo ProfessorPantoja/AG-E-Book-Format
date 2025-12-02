@@ -15,38 +15,69 @@ interface TextFormatterProps {
 }
 
 export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
+  // STATE MANAGEMENT ARCHITECTURE
+  // We keep all state local to this component because the formatting session is ephemeral.
+  // If the app grows, 'metadata' and 'formattedHtml' might move to a Context or Redux store,
+  // but for now, prop drilling is minimal and this keeps the component self-contained.
+
+  // 'editorHtml': The raw input from the rich text editor.
+  // 'formattedHtml': The AI-generated HTML. This is what gets rendered in the Preview.
   const [editorHtml, setEditorHtml] = useState<string>('');
   const [editorText, setEditorText] = useState<string>('');
   const [formattedHtml, setFormattedHtml] = useState<string | null>(null);
+
+  // 'isProcessing': Locks the UI during AI generation to prevent race conditions.
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMode, setProcessingMode] = useState<StyleId | 'standard' | 'juridical' | null>(null);
+  const [processingMode, setProcessingMode] = useState<'standard' | 'juridical' | StyleId | null>(null);
+
+  // 'language': Controls UI labels AND the target language for the AI prompt. (This is a prop, not state)
+
+  // 'metadata': Injected into the final HTML/PDF (Title, Author, etc.).
+  const [metadata, setMetadata] = useState<BookMetadata>({
+    title: 'VEREDAS DA EXECUÇÃO TRABALHISTA',
+    author: 'Prof. Pantoja',
+    publisher: 'Editora Jurídica',
+    year: '2025',
+    headerText: 'Rogério Amaral', // Keep original headerText
+    footerText: 'Material exclusivo - Reprodução proibida',
+    showPageNumbers: true,
+    numberCoverPage: false // Keep original numberCoverPage
+  });
+
   const [selectedFont, setSelectedFont] = useState<FontOption>('Playfair Display');
   const [showSettings, setShowSettings] = useState(false);
+
+  // 'preserveContent': CRITICAL FLAG.
+  // true = AI acts as a strict formatter (HTML structure only).
+  // false = AI acts as an editor (can fix typos, improve flow).
+  // We default to true to avoid "hallucinations" or unwanted text changes in legal docs.
   const [preserveContent, setPreserveContent] = useState(true);
+
   const [provider, setProvider] = useState<'gemini' | 'deepseek'>('gemini');
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
 
-  const [metadata, setMetadata] = useState<BookMetadata>({
-    title: 'VEREDAS DA EXECUÇÃO TRABALHISTA',
-    author: 'ROGÉRIO AMARAL',
-    publisher: 'Editora Pantoja',
-    year: '2025',
-    headerText: 'Rogério Amaral',
-    footerText: '',
-    showPageNumbers: true,
-    numberCoverPage: false
-  });
-
-  const handleFormat = async (mode: StyleId | 'standard' | 'juridical') => {
+  /**
+   * CORE LOGIC: handleFormat
+   * This is the bridge between the UI and the AI Services.
+   * 
+   * @param mode - Can be a legacy mode ('standard', 'juridical') or a new StyleId.
+   */
+  const handleFormat = async (mode: 'standard' | 'juridical' | StyleId) => {
     if (!editorText.trim()) return;
 
     setIsProcessing(true);
     setProcessingMode(mode);
-    setFormattedHtml(null);
+    setFormattedHtml(null); // Clear previous result to show loading state
 
     try {
-      let html = "";
+      let html = '';
+
+      // SERVICE SELECTION STRATEGY
+      // We support multiple AI providers. Currently defaulting to Gemini for speed/cost,
+      // but the architecture allows hot-swapping to DeepSeek or OpenAI.
       if (provider === 'gemini') {
+        // The 'mode' here determines WHICH prompt template is loaded.
+        // See: services/prompts/index.ts for the mapping logic.
         html = await formatTextToLuxuryHtml(editorHtml, mode, language, preserveContent);
       } else {
         html = await formatTextWithDeepSeek(editorHtml, mode, language, preserveContent);
@@ -54,7 +85,8 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
       setFormattedHtml(html);
     } catch (err) {
       console.error(err);
-      // Alert is handled in service
+      // Error handling is currently basic (console + alert in service).
+      // Future improvement: Add a UI toast notification system here.
     } finally {
       setIsProcessing(false);
       setProcessingMode(null);
@@ -197,7 +229,7 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowStyleDropdown(false)}
                 ></div>
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 bottom-full mb-2 w-56 bg-white rounded-lg shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
                   <button
                     onClick={() => {
                       handleFormat('magazine-modern');
@@ -312,7 +344,8 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
           selectedFont={selectedFont}
           language={language}
           isProcessing={isProcessing}
-          processingMode={processingMode}
+          processingMode={processingMode as any}
+          onUpdate={(newHtml) => setFormattedHtml(newHtml)}
         />
       </div>
     </div>
