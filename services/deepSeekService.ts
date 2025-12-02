@@ -1,43 +1,42 @@
-import { GoogleGenAI } from "@google/genai";
+import { Language } from '../types';
 
-const getClient = () => {
-  const apiKey = import.meta.env.VITE_API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key not found. Please add VITE_API_KEY to your .env.local file.");
-  }
-  return new GoogleGenAI({ apiKey });
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+
+const getApiKey = () => {
+    const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+    if (!apiKey) {
+        throw new Error("DeepSeek API Key not found. Please add VITE_DEEPSEEK_API_KEY to your .env.local file.");
+    }
+    return apiKey;
 };
 
-export const formatTextToLuxuryHtml = async (
-  rawTextOrHtml: string,
-  mode: 'standard' | 'juridical' = 'standard',
-  language: 'pt' | 'en' = 'pt',
-  preserveContent: boolean = true
+export const formatTextWithDeepSeek = async (
+    rawTextOrHtml: string,
+    mode: 'standard' | 'juridical' = 'standard',
+    language: 'pt' | 'en' = 'pt',
+    preserveContent: boolean = true
 ): Promise<string> => {
-  const ai = getClient();
+    const apiKey = getApiKey();
 
-  // Use gemini-2.5-flash-preview-09-2025 as requested by user
-  const model = "gemini-2.5-flash-preview-09-2025";
+    const langInstruction = language === 'pt'
+        ? "Output everything in Brazilian Portuguese."
+        : "Output everything in English.";
 
-  const langInstruction = language === 'pt'
-    ? "Output everything in Brazilian Portuguese."
-    : "Output everything in English.";
-
-  const contentRule = preserveContent
-    ? `*** CRITICAL RULE: CONTENT PRESERVATION (LOCKED) ***
+    const contentRule = preserveContent
+        ? `*** CRITICAL RULE: CONTENT PRESERVATION (LOCKED) ***
        - **DO NOT CHANGE THE TEXT CONTENT.** 
        - Do not rewrite sentences. 
        - Do not summarize. 
        - Do not "improve" the writing style.
        - YOUR JOB IS STRICTLY FORMATTING AND LAYOUT.
        - If the user provided HTML (<b>, <i>, <u>), RESPECT THIS EMPHASIS. You may upgrade <b> to <strong> or a specific class, but DO NOT remove the emphasis the author intended.`
-    : `*** CONTENT ENHANCEMENT MODE (UNLOCKED) ***
+        : `*** CONTENT ENHANCEMENT MODE (UNLOCKED) ***
        - You are allowed to lightly edit the text for clarity, flow, and professional tone.
        - Fix typos and grammar errors.
        - Improve sentence structure if it sounds awkward.
        - BUT maintain the original meaning and key arguments.`;
 
-  let systemPrompt = `
+    let systemPrompt = `
     You are a world-class book designer and editor. Your goal is to take input content (which may contain raw text or basic HTML like bold/italics) and transform it into a "luxury" E-book format using semantic HTML.
     
     ${langInstruction}
@@ -59,12 +58,8 @@ export const formatTextToLuxuryHtml = async (
        - Ensure you add corresponding id attributes to your <h2> and <h3> tags (e.g., <h2 id="chapter-1">).
   `;
 
-  let config: any = {
-    temperature: 0.3,
-  };
-
-  if (mode === 'juridical') {
-    systemPrompt += `
+    if (mode === 'juridical') {
+        systemPrompt += `
     
     *** ELITE JURIDICAL & VISUAL ENRICHMENT MODE ACTIVE ***
     - The target audience is high-level legal professionals, judges, and scholars.
@@ -105,28 +100,36 @@ export const formatTextToLuxuryHtml = async (
     3. **ANALYSIS**:
        - Look at the input HTML. If the user put something in <b>BOLD</b> or <u>UNDERLINE</u>, it is likely a candidate for a header, a key term, or a Callout Box.
     `;
+    }
 
-    // Enable thinking for complex legal formatting + mermaid generation
-    config = {
-      // thinkingConfig removed to avoid quota issues on Free Tier
-      temperature: 0.3,
-    };
-  }
+    try {
+        const response = await fetch(DEEPSEEK_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat", // or deepseek-reasoner for thinking
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `INPUT CONTENT:\n${rawTextOrHtml}` }
+                ],
+                temperature: 0.3,
+                stream: false
+            })
+        });
 
-  try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: [
-        { role: 'user', parts: [{ text: `${systemPrompt}\n\n---\nINPUT CONTENT:\n${rawTextOrHtml}` }] }
-      ],
-      config: config
-    });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || "DeepSeek API Error");
+        }
 
-    return response.text || "<p>Error: No content generated.</p>";
-  } catch (error: any) {
-    console.error("Formatting error:", error);
-    // Alert the user with the specific error message
-    alert(`Erro na IA: ${error.message || error}`);
-    throw error;
-  }
+        const data = await response.json();
+        return data.choices[0]?.message?.content || "<p>Error: No content generated.</p>";
+    } catch (error: any) {
+        console.error("DeepSeek Formatting error:", error);
+        alert(`Erro no DeepSeek: ${error.message || error}`);
+        throw error;
+    }
 };
