@@ -27,7 +27,7 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
   const [metadata, setMetadata] = useState<BookMetadata>({
     title: 'VEREDAS DA EXECUÇÃO TRABALHISTA',
     author: 'ROGÉRIO AMARAL',
-    publisher: 'TESTE',
+    publisher: 'Editora Pantoja',
     year: '2025',
     headerText: 'Rogério Amaral',
     footerText: '',
@@ -110,8 +110,8 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
             <button
               onClick={() => setPreserveContent(!preserveContent)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded transition-colors ${preserveContent
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                 }`}
               title={preserveContent ? "Conteúdo Bloqueado (IA não reescreve)" : "Conteúdo Livre (IA pode melhorar texto)"}
             >
