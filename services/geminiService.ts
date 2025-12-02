@@ -157,10 +157,34 @@ export const formatTextToLuxuryHtml = async (
     *** VISUAL ENRICHMENT INSTRUCTIONS (WOW EFFECT) ***
     Even though this is a legal text, you MUST detect opportunities to make it visually engaging without losing professional tone.
     
-    1. **DIAGRAMS (Mermaid.js)**:
-       - If the text describes a legal process, timeline, or hierarchy, INSERT a Mermaid diagram.
-       - Wrap EXACTLY like this: <div class="mermaid">graph TD; A-->B;</div>
-       - Use 'graph TD' for processes/flows.
+    
+    1. **DIAGRAMS (Mermaid.js)** - CRITICAL SYNTAX RULES:
+       - ONLY use Mermaid if the text CLEARLY describes a process with 3+ sequential steps
+       - Use simple node names (A, B, C or short words WITHOUT special characters)
+       - ALWAYS wrap in: <div class="mermaid">CODE_HERE</div>
+       - NO special characters in node labels (avoid: parentheses, quotes, slashes, dots, commas)
+       
+       VALID Example 1:
+       <div class="mermaid">
+       graph TD
+           A[Peticao] --> B[Citacao]
+           B --> C[Defesa]
+           C --> D[Sentenca]
+       </div>
+       
+       VALID Example 2:
+       <div class="mermaid">
+       graph LR
+           Inicio --> Execucao --> Pagamento --> Fim
+       </div>
+       
+       FORBIDDEN - DO NOT USE:
+       - Long labels with special chars like: A[1. Pesquisa (SISBAJUD)]
+       - Multiple connections syntax like: A --> B, C, D
+       - Complex syntax like subgraphs or styling
+       - Accents or special characters in node names
+       
+       IMPORTANT: If unsure about syntax, SKIP the diagram. Better no diagram than a broken one.
     
     2. **VISUAL COMPONENTS (CSS Classes)**:
        - **Definitions**: <div class="concept-card"><h4>Title</h4><p>Definition...</p></div>

@@ -25,13 +25,27 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     // Initialize Mermaid diagrams when HTML changes
     useEffect(() => {
         if (html && (window as any).mermaid) {
-            setTimeout(() => {
+            // Need to wait for DOM to be ready
+            setTimeout(async () => {
                 try {
-                    (window as any).mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                    const mermaidElements = document.querySelectorAll('.mermaid');
+                    if (mermaidElements.length > 0) {
+                        // Clear any previous renders
+                        mermaidElements.forEach(el => {
+                            if (!el.getAttribute('data-processed')) {
+                                el.removeAttribute('data-processed');
+                            }
+                        });
+
+                        // Use mermaid.run() which is the modern API
+                        await (window as any).mermaid.run({
+                            nodes: mermaidElements,
+                        });
+                    }
                 } catch (e) {
                     console.warn("Mermaid rendering warning:", e);
                 }
-            }, 100);
+            }, 200);
         }
     }, [html]);
 
