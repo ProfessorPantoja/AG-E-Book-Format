@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { formatTextToLuxuryHtml } from '../services/geminiService';
 import { formatTextWithDeepSeek } from '../services/deepSeekService';
-import { Sparkles, FileText, Settings, Eraser, Scale, Loader2, Lock, Unlock, BookOpen, Bot } from 'lucide-react';
+import { Sparkles, FileText, Settings, Eraser, Scale, Loader2, Lock, Unlock, BookOpen, Bot, ChevronDown, Layout, Feather, Terminal } from 'lucide-react';
 import { FontOption, Language, BookMetadata } from '../types';
+import { StyleId } from '../services/prompts';
 import { t } from '../i18n';
 import { BookSettingsModal } from './BookSettingsModal';
 import { RichTextEditor } from './RichTextEditor';
@@ -18,11 +19,12 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
   const [editorText, setEditorText] = useState<string>('');
   const [formattedHtml, setFormattedHtml] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMode, setProcessingMode] = useState<'standard' | 'juridical' | null>(null);
+  const [processingMode, setProcessingMode] = useState<StyleId | 'standard' | 'juridical' | null>(null);
   const [selectedFont, setSelectedFont] = useState<FontOption>('Playfair Display');
   const [showSettings, setShowSettings] = useState(false);
   const [preserveContent, setPreserveContent] = useState(true);
   const [provider, setProvider] = useState<'gemini' | 'deepseek'>('gemini');
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
 
   const [metadata, setMetadata] = useState<BookMetadata>({
     title: 'VEREDAS DA EXECUÇÃO TRABALHISTA',
@@ -35,7 +37,7 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
     numberCoverPage: false
   });
 
-  const handleFormat = async (mode: 'standard' | 'juridical') => {
+  const handleFormat = async (mode: StyleId | 'standard' | 'juridical') => {
     if (!editorText.trim()) return;
 
     setIsProcessing(true);
@@ -174,6 +176,79 @@ export const TextFormatter: React.FC<TextFormatterProps> = ({ language }) => {
             <span className="font-serif text-sm tracking-wide">{t(language, 'formatter.buttonJuridical')}</span>
             <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out skew-x-12"></div>
           </button>
+
+          {/* New Styles Dropdown */}
+          <div className="relative">
+            <button
+              disabled={isProcessing}
+              onClick={() => setShowStyleDropdown(!showStyleDropdown)}
+              className={`h-full px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all border ${isProcessing
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-gold-300 hover:text-gold-700'
+                }`}
+            >
+              <span className="font-serif text-sm">Outros Estilos</span>
+              <ChevronDown size={16} className={`transition-transform duration-200 ${showStyleDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showStyleDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowStyleDropdown(false)}
+                ></div>
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <button
+                    onClick={() => {
+                      handleFormat('magazine-modern');
+                      setShowStyleDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 transition-colors flex items-center gap-3 border-b border-slate-50"
+                  >
+                    <div className="w-8 h-8 rounded bg-purple-100 text-purple-600 flex items-center justify-center">
+                      <Layout size={16} />
+                    </div>
+                    <div>
+                      <div className="font-serif font-medium text-slate-800">Magazine Modern</div>
+                      <div className="text-xs text-slate-500">Visual ousado e moderno</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleFormat('minimalist-zen');
+                      setShowStyleDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 transition-colors flex items-center gap-3 border-b border-slate-50"
+                  >
+                    <div className="w-8 h-8 rounded bg-stone-100 text-stone-600 flex items-center justify-center">
+                      <Feather size={16} />
+                    </div>
+                    <div>
+                      <div className="font-serif font-medium text-slate-800">Minimalist Zen</div>
+                      <div className="text-xs text-slate-500">Limpo, foco no texto</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleFormat('tech-manual');
+                      setShowStyleDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 transition-colors flex items-center gap-3"
+                  >
+                    <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <Terminal size={16} />
+                    </div>
+                    <div>
+                      <div className="font-serif font-medium text-slate-800">Tech Manual</div>
+                      <div className="text-xs text-slate-500">Para documentação técnica</div>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

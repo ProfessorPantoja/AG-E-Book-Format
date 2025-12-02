@@ -559,14 +559,455 @@
       text-decoration-color: #d97706;
     }
 
+    .chapter-end-marker {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #d97706;
+      margin: 3rem 0;
+      letter-spacing: 0.5em;
+      font-weight: bold;
+    }
+
     /* Print specific fixes */
     @media print {
-      .mermaid {
-        break-inside: avoid;
+
+      /* Adjust margins for print */
+      body {
+        margin: 1in;
       }
 
-      .concept-card {
-        break-inside: avoid;
+      /* Hide elements not needed in print */
+      .no-print {
+        display: none !important;
+      }
+
+      /* Ensure text is black for readability */
+      body,
+      p,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: #000 !important;
+      }
+
+      /* Remove background colors */
+      .callout,
+      .sidebar-note,
+      .key-takeaways,
+      .stat-highlight,
+      .info-box,
+      .tech-note {
+        background: none !important;
+        border-color: #ccc !important;
+      }
+
+      /* Ensure borders are visible */
+      .callout,
+      .sidebar-note,
+      .key-takeaways,
+      .tech-note {
+        border: 1px solid #ccc !important;
+      }
+
+      /* Adjust font sizes for print */
+      h1 {
+        font-size: 24pt;
+      }
+
+      h2 {
+        font-size: 18pt;
+      }
+
+      h3 {
+        font-size: 16pt;
+      }
+
+      p {
+        font-size: 12pt;
+        line-height: 1.5;
+      }
+
+      /* Page breaks */
+      .chapter-end-marker {
+        page-break-after: always;
+      }
+
+      /* Prevent images from breaking across pages */
+      img {
+        page-break-inside: avoid;
+      }
+
+      /* Ensure links are underlined and show URL */
+      a {
+        text-decoration: underline;
+        color: #000;
+      }
+
+      a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 9pt;
+      }
+    }
+
+    /* =========================================
+       MODULAR STYLES (Magazine, Zen, Tech)
+       ========================================= */
+
+    /* MAGAZINE MODERN STYLES */
+    .hero-section {
+      margin: 4rem 0 3rem 0;
+      border-bottom: 3px solid #000;
+      padding-bottom: 2rem;
+    }
+
+    .hero-title {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-subtitle {
+      font-size: 1.5rem;
+      color: #555;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .hero-byline {
+      text-transform: uppercase;
+      font-size: 0.875rem;
+      color: #888;
+      letter-spacing: 0.1em;
+    }
+
+    .kicker {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #d97706;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .two-column {
+      column-count: 2;
+      column-gap: 3rem;
+      margin: 2rem 0;
+    }
+
+    .magazine-pullquote {
+      margin: 3rem 0;
+      padding: 2rem;
+      border-left: 5px solid #000;
+      background: #f8f8f8;
+    }
+
+    .magazine-pullquote blockquote {
+      font-size: 2rem;
+      font-style: italic;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .magazine-pullquote cite {
+      display: block;
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #666;
+      font-style: normal;
+    }
+
+    .stat-highlight {
+      text-align: center;
+      padding: 2rem;
+      margin: 2rem 0;
+      background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    }
+
+    .stat-number {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      color: #000;
+    }
+
+    .stat-context {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+
+    .info-box {
+      background: #fffaeb;
+      border: 2px solid #f59e0b;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .box-title {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      color: #92400e;
+    }
+
+    /* MINIMALIST ZEN STYLES */
+    .zen-title {
+      font-size: 3rem;
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 2rem;
+      color: #1a1a1a;
+    }
+
+    .zen-subtitle {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: #666;
+      margin-bottom: 4rem;
+    }
+
+    .zen-heading {
+      font-size: 2rem;
+      font-weight: 400;
+      margin-top: 4rem;
+      margin-bottom: 2rem;
+      color: #333;
+    }
+
+    .zen-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .zen-list li {
+      margin-bottom: 1.5rem;
+      padding-left: 2rem;
+      position: relative;
+    }
+
+    .zen-list li::before {
+      content: '·';
+      position: absolute;
+      left: 0;
+      color: #999;
+      font-size: 1.5rem;
+    }
+
+    .zen-quote {
+      margin: 4rem auto;
+      max-width: 600px;
+      text-align: center;
+      font-size: 1.5rem;
+      line-height: 1.8;
+      color: #555;
+      font-style: italic;
+    }
+
+    .zen-divider {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 5rem auto;
+      width: 100px;
+    }
+
+    /* TECH MANUAL STYLES */
+    .tech-section {
+      margin-top: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .tech-heading {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tech-note {
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 6px;
+      border-left: 4px solid;
+    }
+
+    .tech-note.note-info {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1e3a8a;
+    }
+
+    .tech-note.note-warning {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    .tech-note.note-tip {
+      background: #d1fae5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin: 1.5rem 0;
+    }
+
+    .code-block code {
+      font-family: inherit;
+    }
+
+    .preview-content code {
+      background: #f1f5f9;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875em;
+      color: #e11d48;
+    }
+
+    .tech-steps {
+      counter-reset: tech-step;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .tech-steps li {
+      counter-increment: tech-step;
+      position: relative;
+      padding-left: 3.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .tech-steps li::before {
+      content: counter(tech-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: #3b82f6;
+      color: white;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+
+    .step-details {
+      margin-top: 0.75rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .tech-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+      font-size: 0.875rem;
+    }
+
+    .tech-table th {
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .tech-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .tech-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tech-reference {
+      background: #f1f5f9;
+      border: 2px solid #cbd5e1;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      border-radius: 8px;
+    }
+
+    .tech-reference h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tech-reference ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .tech-reference li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Print specific fixes */
+    @media print {
+
+      /* Prevent page breaks inside visual elements */
+      .mermaid,
+      .concept-card,
+      .callout-box,
+      .sidebar-note,
+      .callout,
+      .key-takeaways,
+      .timeline-item,
+      .stat-card,
+      .pull-quote,
+      .chapter-opening,
+      .drop-cap-paragraph {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      /* Keep headings with next content */
+      h1,
+      h2,
+      h3,
+      h4 {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+      }
+
+      /* Ensure backgrounds print */
+      .sidebar-note,
+      .callout,
+      .key-takeaways {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
     }
   </style>
