@@ -1,0 +1,5 @@
+{
+  "name": "LuxeScript AI",
+  "description": "A luxury e-book creator and content formatter powered by Gemini. Transform raw text into beautifully structured documents and edit images with natural language.",
+  "requestFramePermissions": []
+}
